@@ -1,6 +1,6 @@
 import { GetServerSidePropsContext } from 'next'
-import { prisma } from '../../../lib/prisma'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../lib/adminAuth'
+import { getSupabaseServerClient } from '../../../lib/supabaseServer'
 import { useState } from 'react'
 import Modal from '../../../components/Modal'
 import MultiImageUploader from '../../../components/MultiImageUploader'
@@ -120,7 +120,13 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext){
   const token = getAdminTokenFromReq(ctx.req as any)
   if(!token || !verifyAdminToken(token)) return { redirect: { destination: '/admin/login', permanent: false } }
   const { id } = ctx.query
-  const product = await prisma.product.findUnique({ where: { id: String(id) } })
+  const supabase = getSupabaseServerClient()
+  if (!supabase) return { notFound: true }
+  const { data: product, error } = await supabase.from('Product').select('*').eq('id', String(id)).maybeSingle()
+  if (error) {
+    console.error('Product query failed:', error.message)
+    return { notFound: true }
+  }
   if(!product) return { notFound: true }
-  return { props: { product: JSON.parse(JSON.stringify(product)) } }
+  return { props: { product } }
 }

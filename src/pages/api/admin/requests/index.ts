@@ -1,14 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { prisma } from '../../../../lib/prisma'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../../lib/adminAuth'
+import { getSupabaseServerClient } from '../../../../lib/supabaseServer'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse){
   const token = getAdminTokenFromReq(req)
   if(!token || !verifyAdminToken(token)) return res.status(401).json({ error: 'Unauthorized' })
+  const supabase = getSupabaseServerClient()
+  if (!supabase) return res.status(500).json({ error: 'Supabase non configuré' })
 
   if(req.method === 'GET'){
-    const requests = await prisma.customRequest.findMany({ orderBy: { createdAt: 'desc' } })
-    return res.status(200).json(requests)
+    const { data, error } = await supabase.from('CustomRequest').select('*').order('createdAt', { ascending: false })
+    if (error) return res.status(500).json({ error: 'Lecture des demandes échouée' })
+    return res.status(200).json(data || [])
   }
 
   res.setHeader('Allow', ['GET'])

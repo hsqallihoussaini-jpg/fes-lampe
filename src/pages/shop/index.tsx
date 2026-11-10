@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import ProductCard from '../../components/ProductCard'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServerClient } from '../../lib/supabaseServer'
 
 const categories = [
   {
@@ -196,15 +196,13 @@ export default function Shop({ products }:{ products:any[] }){
 }
 
 export async function getServerSideProps(){
-  const supabaseUrl = process.env.SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+  const supabase = getSupabaseServerClient()
 
-  if (!supabaseUrl || !supabaseKey) {
+  if (!supabase) {
     console.error('Shop catalog unavailable: Supabase server credentials are missing')
     return { props: { products: [] } }
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey)
   const { data, error } = await supabase
     .from('Product')
     .select('*')

@@ -16,12 +16,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if(req.method === 'POST'){
     const { title, description, price, image, images, category, inStock, dimensions } = req.body
-    const { data, error } = await supabase.from('Product').insert({
-      title, description, price: Number(price), image,
-      images: images ? JSON.stringify(images) : null,
-      category, inStock: Boolean(inStock), dimensions,
-    }).select().single()
-    if (error) return res.status(500).json({ error: 'Création produit échouée' })
+    const product = {
+      title: String(title || '').trim(),
+      description: description ? String(description) : null,
+      price: Number(price),
+      image: image ? String(image) : null,
+      images: Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null,
+      category: category ? String(category) : null,
+      inStock: inStock === undefined ? true : Boolean(inStock),
+      dimensions: dimensions ? String(dimensions) : null,
+    }
+
+    if (!product.title || !Number.isFinite(product.price) || product.price <= 0) {
+      return res.status(400).json({ error: 'Nom et prix valides requis' })
+    }
+
+    const { data, error } = await supabase.from('Product').insert(product).select().single()
+    if (error) {
+      console.error('Supabase product insert error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+      return res.status(500).json({
+        error: `Création produit échouée: ${error.message}`,
+      })
+    }
     return res.status(201).json(data)
   }
 

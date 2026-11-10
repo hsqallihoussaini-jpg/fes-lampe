@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable, { type File as FormidableFile } from 'formidable'
 import fs from 'fs'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServerClient } from '../../lib/supabaseServer'
 
 export const config = {
   api: {
@@ -9,16 +9,7 @@ export const config = {
   },
 }
 
-const supabaseUrl =
-  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
 const bucket = process.env.SUPABASE_BUCKET || 'uploads'
-
-const supabase =
-  supabaseUrl && supabaseKey
-    ? createClient(supabaseUrl, supabaseKey)
-    : null
 
 export default async function handler(
   req: NextApiRequest,
@@ -28,6 +19,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const supabase = getSupabaseServerClient()
   if (!supabase) {
     return res.status(500).json({
       error: 'Supabase not configured on server',

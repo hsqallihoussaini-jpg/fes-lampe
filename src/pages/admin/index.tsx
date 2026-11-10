@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { GetServerSidePropsContext } from 'next'
-import { prisma } from '../../lib/prisma'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../lib/adminAuth'
 import VendorShell from '../../components/VendorShell'
+import { getSupabaseServerClient } from '../../lib/supabaseServer'
 
 export default function AdminIndex({ stats }:{ stats:any }){
   return (
@@ -66,11 +66,22 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext){
   if(!token || !verifyAdminToken(token)){
     return { redirect: { destination: '/admin/login', permanent: false } }
   }
-  const [products, orders, requests] = await Promise.all([
-    prisma.product.findMany({ select: { category: true } }),
-    prisma.order.findMany({ select: { id: true } }),
-    prisma.customRequest.findMany({ select: { id: true } }),
+  const supabase = getSupabaseServerClient()
+  if (!supabase) return { props: { stats: [] } }
+
+  const [productsResult, ordersResult, requestsResult] = await Promise.all([
+    supabase.from('Product').select('category'),
+    supabase.from('Order').select('id'),
+    supabase.from('CustomRequest').select('id'),
   ])
+  if (productsResult.error || ordersResult.error || requestsResult.error) {
+    console.error('Admin dashboard query failed:', productsResult.error?.message || ordersResult.error?.message || requestsResult.error?.message)
+    return { props: { stats: [] } }
+  }
+
+  const products = productsResult.data || []
+  const orders = ordersResult.data || []
+  const requests = requestsResult.data || []
 
   const categories = new Set(products.map((item) => item.category).filter(Boolean))
 

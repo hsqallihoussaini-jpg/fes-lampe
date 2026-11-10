@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { GetServerSidePropsContext } from 'next'
-import { prisma } from '../../lib/prisma'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../lib/adminAuth'
 import VendorShell from '../../components/VendorShell'
+import { getSupabaseServerClient } from '../../lib/supabaseServer'
 
 export default function SellerIndex({ stats, recentProducts, recentOrders, recentRequests }:{ stats:any, recentProducts:any[], recentOrders:any[], recentRequests:any[] }){
   return (
@@ -133,11 +133,22 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext){
   if(!token || !verifyAdminToken(token)){
     return { redirect: { destination: '/admin/login', permanent: false } }
   }
-  const [products, orders, requests] = await Promise.all([
-    prisma.product.findMany({ orderBy: { createdAt: 'desc' }, take: 6, select: { id: true, title: true, price: true, category: true, createdAt: true } }),
-    prisma.order.findMany({ orderBy: { createdAt: 'desc' }, take: 5, select: { id: true, total: true, createdAt: true } }),
-    prisma.customRequest.findMany({ orderBy: { createdAt: 'desc' }, take: 5, select: { id: true, name: true, email: true, dimensions: true, details: true } }),
+  const supabase = getSupabaseServerClient()
+  if (!supabase) return { props: { stats: [], recentProducts: [], recentOrders: [], recentRequests: [] } }
+
+  const [productsResult, ordersResult, requestsResult] = await Promise.all([
+    supabase.from('Product').select('id,title,price,category,createdAt').order('createdAt', { ascending: false }).limit(6),
+    supabase.from('Order').select('id,total,createdAt').order('createdAt', { ascending: false }).limit(5),
+    supabase.from('CustomRequest').select('id,name,email,dimensions,details').order('createdAt', { ascending: false }).limit(5),
   ])
+  if (productsResult.error || ordersResult.error || requestsResult.error) {
+    console.error('Seller dashboard query failed:', productsResult.error?.message || ordersResult.error?.message || requestsResult.error?.message)
+    return { props: { stats: [], recentProducts: [], recentOrders: [], recentRequests: [] } }
+  }
+
+  const products = productsResult.data || []
+  const orders = ordersResult.data || []
+  const requests = requestsResult.data || []
 
   const categories = new Set(products.map((product) => product.category).filter(Boolean))
 

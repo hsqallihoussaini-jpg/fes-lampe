@@ -1,7 +1,7 @@
 import { GetServerSidePropsContext } from 'next'
-import { prisma } from '../../../lib/prisma'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../lib/adminAuth'
 import VendorShell from '../../../components/VendorShell'
+import { getSupabaseServerClient } from '../../../lib/supabaseServer'
 
 export default function AdminRequests({ requests }:{ requests:any[] }){
   return (
@@ -68,6 +68,12 @@ export default function AdminRequests({ requests }:{ requests:any[] }){
 export async function getServerSideProps(ctx: GetServerSidePropsContext){
   const token = getAdminTokenFromReq(ctx.req as any)
   if(!token || !verifyAdminToken(token)) return { redirect: { destination: '/admin/login', permanent: false } }
-  const requests = await prisma.customRequest.findMany({ orderBy: { createdAt: 'desc' } })
-  return { props: { requests: JSON.parse(JSON.stringify(requests)) } }
+  const supabase = getSupabaseServerClient()
+  if (!supabase) return { props: { requests: [] } }
+  const { data: requests, error } = await supabase.from('CustomRequest').select('*').order('createdAt', { ascending: false })
+  if (error) {
+    console.error('Custom requests query failed:', error.message)
+    return { props: { requests: [] } }
+  }
+  return { props: { requests: requests || [] } }
 }

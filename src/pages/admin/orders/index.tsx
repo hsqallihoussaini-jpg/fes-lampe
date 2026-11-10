@@ -1,7 +1,7 @@
 import { GetServerSidePropsContext } from 'next'
-import { prisma } from '../../../lib/prisma'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../lib/adminAuth'
 import VendorShell from '../../../components/VendorShell'
+import { getSupabaseServerClient } from '../../../lib/supabaseServer'
 
 export default function AdminOrders({ orders }:{ orders:any[] }){
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0)
@@ -70,6 +70,12 @@ export default function AdminOrders({ orders }:{ orders:any[] }){
 export async function getServerSideProps(ctx: GetServerSidePropsContext){
   const token = getAdminTokenFromReq(ctx.req as any)
   if(!token || !verifyAdminToken(token)) return { redirect: { destination: '/admin/login', permanent: false } }
-  const orders = await prisma.order.findMany({ orderBy: { createdAt: 'desc' } })
-  return { props: { orders: JSON.parse(JSON.stringify(orders)) } }
+  const supabase = getSupabaseServerClient()
+  if (!supabase) return { props: { orders: [] } }
+  const { data: orders, error } = await supabase.from('Order').select('*').order('createdAt', { ascending: false })
+  if (error) {
+    console.error('Orders query failed:', error.message)
+    return { props: { orders: [] } }
+  }
+  return { props: { orders: orders || [] } }
 }

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import ProductCard from '../../components/ProductCard'
-import { prisma } from '../../lib/prisma'
+import { createClient } from '@supabase/supabase-js'
 
 const categories = [
   {
@@ -196,6 +196,24 @@ export default function Shop({ products }:{ products:any[] }){
 }
 
 export async function getServerSideProps(){
-  const products = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } })
-  return { props: { products: JSON.parse(JSON.stringify(products)) } }
+  const supabaseUrl = process.env.SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Shop catalog unavailable: Supabase server credentials are missing')
+    return { props: { products: [] } }
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
+  const { data, error } = await supabase
+    .from('Product')
+    .select('*')
+    .order('createdAt', { ascending: false })
+
+  if (error) {
+    console.error('Shop catalog query failed:', error.message)
+    return { props: { products: [] } }
+  }
+
+  return { props: { products: data || [] } }
 }

@@ -5,12 +5,16 @@ import { useState } from 'react'
 import Modal from '../../../components/Modal'
 import MultiImageUploader from '../../../components/MultiImageUploader'
 import VendorShell from '../../../components/VendorShell'
+import { pricingModes, productCategories, stockStatuses } from '../../../lib/catalog'
 
 export default function EditProduct({ product }:{ product:any }){
   const [title, setTitle] = useState(product?.title||'')
   const [price, setPrice] = useState(product?.price||0)
   const [category, setCategory] = useState(product?.category||'')
   const [dimensions, setDimensions] = useState(product?.dimensions||'')
+  const [description, setDescription] = useState(product?.description||'')
+  const [stockStatus, setStockStatus] = useState(product?.stockStatus || (product?.inStock === false ? 'OUT_OF_STOCK' : 'IN_STOCK'))
+  const [pricingMode, setPricingMode] = useState(product?.pricingMode || 'FIXED')
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image || null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const existingImages = product?.images ? JSON.parse(product.images) : []
@@ -32,7 +36,8 @@ export default function EditProduct({ product }:{ product:any }){
       }
     }
     const mainImage = imagesArr[0] || product?.image
-    await fetch(`/api/admin/products/${product.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, price, image: mainImage, images: imagesArr, category, dimensions }) })
+    const response = await fetch(`/api/admin/products/${product.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, description, price, image: mainImage, images: imagesArr, category, dimensions, stockStatus, pricingMode }) })
+    if (!response.ok) { const result = await response.json().catch(() => null); alert(result?.error || 'Mise à jour échouée'); return }
     window.location.href = '/admin/products'
   }
 
@@ -69,8 +74,17 @@ export default function EditProduct({ product }:{ product:any }){
           <div className="vendor-form-grid vendor-form-grid--cols">
             <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Titre" className="vendor-input" />
             <input type="number" value={price} onChange={e=>setPrice(Number(e.target.value))} placeholder="Prix" className="vendor-input" />
-            <input value={category} onChange={e=>setCategory(e.target.value)} placeholder="Catégorie" className="vendor-input" />
             <input value={dimensions} onChange={e=>setDimensions(e.target.value)} placeholder="Dimensions" className="vendor-input" />
+            <textarea value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description" className="vendor-input min-h-28" />
+            <select value={category} onChange={e=>setCategory(e.target.value)} className="vendor-input">
+              {productCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+            <select value={stockStatus} onChange={e=>setStockStatus(e.target.value)} className="vendor-input">
+              {stockStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+            <select value={pricingMode} onChange={e=>setPricingMode(e.target.value)} className="vendor-input">
+              {pricingModes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
           </div>
 
           <div className="mt-5">

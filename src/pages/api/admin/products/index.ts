@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { randomUUID } from 'crypto'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../../lib/adminAuth'
 import { getSupabaseServerClient } from '../../../../lib/supabaseServer'
+import { productCategories, pricingModes, stockStatuses } from '../../../../lib/catalog'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse){
   const token = getAdminTokenFromReq(req)
@@ -16,14 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if(req.method === 'POST'){
-    const { title, description, price, image, images, category, inStock, dimensions } = req.body
-    const allowedCategories = [
-      'lampes & luminaires',
-      'décoration',
-      'bijoux & accessoires',
-      'créations personnalisées',
-      'pièces uniques',
-    ]
+    const { title, description, price, image, images, category, inStock, dimensions, stockStatus, pricingMode } = req.body
+    const allowedCategories: string[] = productCategories.map((item) => item.value)
     const product = {
       id: randomUUID(),
       title: String(title || '').trim(),
@@ -35,6 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       inStock: inStock === undefined ? true : Boolean(inStock),
       dimensions: dimensions ? String(dimensions) : null,
       createdAt: new Date().toISOString(),
+      stockStatus: stockStatuses.some((item) => item.value === stockStatus) ? stockStatus : 'IN_STOCK',
+      pricingMode: pricingModes.some((item) => item.value === pricingMode) ? pricingMode : 'FIXED',
     }
 
     if (!product.title || !Number.isFinite(product.price) || product.price <= 0) {

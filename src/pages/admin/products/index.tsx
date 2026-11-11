@@ -1,8 +1,12 @@
 import { useState } from 'react'
+import type { GetServerSidePropsContext } from 'next'
 import MultiImageUploader from '../../../components/MultiImageUploader'
 import VendorShell from '../../../components/VendorShell'
+import { pricingModes, productCategories, stockStatuses } from '../../../lib/catalog'
+import { getAdminTokenFromReq, verifyAdminToken } from '../../../lib/adminAuth'
+import { getSupabaseServerClient } from '../../../lib/supabaseServer'
 
-export default function AdminProducts() {
+export default function AdminProducts({ products = [] }: { products?: any[] }) {
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('')
@@ -10,13 +14,8 @@ export default function AdminProducts() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imagesItems, setImagesItems] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const productCategories = [
-    { value: 'lampes & luminaires', label: 'Lampes & luminaires' },
-    { value: 'décoration', label: 'Décoration' },
-    { value: 'bijoux & accessoires', label: 'Bijoux & accessoires' },
-    { value: 'créations personnalisées', label: 'Créations personnalisées' },
-    { value: 'pièces uniques', label: 'Pièces uniques' },
-  ]
+  const [stockStatus, setStockStatus] = useState('IN_STOCK')
+  const [pricingMode, setPricingMode] = useState('FIXED')
 
   async function create() {
     if (!title.trim()) {
@@ -112,6 +111,8 @@ export default function AdminProducts() {
           images: imagesArr,
           category: category.trim(),
           dimensions: dimensions.trim(),
+          stockStatus,
+          pricingMode,
         }),
       })
 
@@ -137,6 +138,8 @@ export default function AdminProducts() {
       setPrice('')
       setCategory('')
       setDimensions('')
+      setStockStatus('IN_STOCK')
+      setPricingMode('FIXED')
       setImagesItems([])
       setImagePreview(null)
     } catch (error: any) {
@@ -153,8 +156,15 @@ export default function AdminProducts() {
 
   return (
     <VendorShell
+      eyebrow="Maison Sqalli · Catalogue"
       title="Ajouter un produit"
       subtitle="Ajoutez une nouvelle création à votre catalogue."
+      nav={[
+        { href: '/seller', label: 'Dashboard' },
+        { href: '/admin/products', label: 'Produits', active: true },
+        { href: '/admin/collections', label: 'Collections signées' },
+        { href: '/admin/settings', label: 'Paramètres' },
+      ]}
     >
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-10">
@@ -220,6 +230,20 @@ export default function AdminProducts() {
             </div>
 
             <div>
+              <label className="mb-2 block text-sm uppercase tracking-[0.18em] text-[#d3ad77]">Disponibilité</label>
+              <select value={stockStatus} onChange={(e) => setStockStatus(e.target.value)} className="w-full rounded-lg border border-[#5d4937] bg-[#17130f] px-4 py-3 text-[#f8efdf] outline-none focus:border-[#d3ad77]">
+                {stockStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm uppercase tracking-[0.18em] text-[#d3ad77]">Tarification</label>
+              <select value={pricingMode} onChange={(e) => setPricingMode(e.target.value)} className="w-full rounded-lg border border-[#5d4937] bg-[#17130f] px-4 py-3 text-[#f8efdf] outline-none focus:border-[#d3ad77]">
+                {pricingModes.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
+              </select>
+            </div>
+
+            <div>
               <label className="mb-2 block text-sm uppercase tracking-[0.18em] text-[#d3ad77]">
                 Dimensions
               </label>
@@ -278,7 +302,42 @@ export default function AdminProducts() {
             {loading ? 'Création en cours...' : 'Créer le produit'}
           </button>
         </div>
+
+        <section className="mt-12">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl text-[#f8efdf]">Produits publiés</h2>
+              <p className="mt-1 text-sm text-[#c7b197]">{products.length} produit(s) dans le catalogue.</p>
+            </div>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {products.map((product) => (
+              <article key={product.id} className="vendor-list-item">
+                {product.image ? <img src={product.image} alt={product.title} className="mb-4 aspect-square w-full rounded-xl object-cover" /> : null}
+                <h3 className="text-xl text-[#f8efdf]">{product.title}</h3>
+                <p className="mt-2 text-sm text-[#c7b197]">{product.price} MAD · {product.category}</p>
+                <div className="mt-4 flex gap-3">
+                  <a href={`/admin/products/${product.id}`} className="vendor-button-secondary">Modifier</a>
+                  <button type="button" onClick={async () => { if (!window.confirm('Supprimer ce produit ?')) return; const response = await fetch(`/api/admin/products/${product.id}`, { method: 'DELETE' }); if (response.ok) window.location.reload(); else alert('Suppression échouée') }} className="vendor-button-secondary">Supprimer</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       </div>
     </VendorShell>
   )
+}
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const token = getAdminTokenFromReq(ctx.req as any)
+  if (!token || !verifyAdminToken(token)) return { redirect: { destination: '/admin/login', permanent: false } }
+  const supabase = getSupabaseServerClient()
+  if (!supabase) return { props: { products: [] } }
+  const { data, error } = await supabase.from('Product').select('*').order('createdAt', { ascending: false })
+  if (error) {
+    console.error('Admin products query failed:', error.message)
+    return { props: { products: [] } }
+  }
+  return { props: { products: data || [] } }
 }

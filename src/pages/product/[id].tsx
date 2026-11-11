@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 import { CartContext } from '../../context/CartContext'
 import Lightbox from '../../components/Lightbox'
+import { stockLabel } from '../../lib/catalog'
 
 export default function ProductPage(){
   const router = useRouter()
@@ -68,7 +69,10 @@ export default function ProductPage(){
 
         <div>
           <h1 className="text-2xl font-semibold mb-2">{product.title}</h1>
-          <p className="text-lg text-bronze font-bold mb-4">{product.price} MAD</p>
+          <p className="mb-4 text-sm uppercase tracking-[0.14em] text-bronze">{stockLabel(product.stockStatus, product.inStock)}</p>
+          {product.pricingMode === 'NEGOTIABLE' ? (
+            <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '212XXXXXXXXX'}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par ce produit : ${product.title}. Voici le lien : ${typeof window !== 'undefined' ? window.location.href : `/product/${product.id}`}. Je souhaiterais avoir plus d’informations concernant son prix. Merci.`)}`} target="_blank" rel="noreferrer" className="mb-4 inline-flex rounded-full border border-[#d3ad77] px-4 py-2 text-sm text-bronze">Négocier avec le vendeur</a>
+          ) : <p className="text-lg text-bronze font-bold mb-4">{product.price} MAD</p>}
           <p className="mb-4">{product.description}</p>
           {product.dimensions && <p className="mb-4"><strong>Dimensions:</strong> {product.dimensions}</p>}
           <div className="flex gap-3">

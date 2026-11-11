@@ -14,6 +14,8 @@ export default function AdminIndex({ stats }:{ stats:any }){
       nav={[
         { href: '/seller', label: 'Dashboard', active: true },
         { href: '/admin/products', label: 'Catalogue' },
+        { href: '/admin/collections', label: 'Collections signées' },
+        { href: '/admin/settings', label: 'Paramètres' },
         { href: '/admin/orders', label: 'Commandes' },
         { href: '/admin/requests', label: 'Demandes' },
       ]}
@@ -54,6 +56,18 @@ export default function AdminIndex({ stats }:{ stats:any }){
             <div className="vendor-stat-label">Sur mesure</div>
             <div className="mt-3 text-2xl text-[#f8efdf]">Demandes</div>
             <div className="mt-2 text-sm leading-relaxed text-[#c7b197]">Gérer les projets personnalisés.</div>
+          </Link>
+
+          <Link href="/admin/collections" className="vendor-list-item block">
+            <div className="vendor-stat-label">Accueil</div>
+            <div className="mt-3 text-2xl text-[#f8efdf]">Collections signées</div>
+            <div className="mt-2 text-sm leading-relaxed text-[#c7b197]">Gérer les images visibles sur la page d’accueil.</div>
+          </Link>
+
+          <Link href="/admin/settings" className="vendor-list-item block">
+            <div className="vendor-stat-label">Configuration</div>
+            <div className="mt-3 text-2xl text-[#f8efdf]">Paramètres</div>
+            <div className="mt-2 text-sm leading-relaxed text-[#c7b197]">Configurer le numéro WhatsApp vendeur.</div>
           </Link>
         </div>
       </section>

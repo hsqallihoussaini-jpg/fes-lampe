@@ -17,6 +17,22 @@ model Product {
   images    String? // JSON array of image URLs
   category  String?
   inStock   Boolean @default(true)
+  stockStatus String @default("IN_STOCK")
+  pricingMode String @default("FIXED")
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model SignedCollectionImage {
+  id        String   @id @default(cuid())
+  url       String
+  position  Int      @default(0)
+  visible   Boolean  @default(true)
   createdAt DateTime @default(now())
 }
 

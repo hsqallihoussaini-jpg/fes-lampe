@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { stockLabel } from '../lib/catalog'
 
 export default function ProductCard({ product }:{ product:any }){
   const parseImages = () => {
@@ -14,6 +15,10 @@ export default function ProductCard({ product }:{ product:any }){
   const imgs = parseImages()
   const main = imgs.length ? imgs[0] : product.image
   const category = product.category || 'Collection'
+  const negotiate = product.pricingMode === 'NEGOTIABLE'
+  const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '212XXXXXXXXX'
+  const productUrl = typeof window !== 'undefined' ? `${window.location.origin}/product/${product.id}` : `/product/${product.id}`
+  const whatsappMessage = `Bonjour, je suis intéressé(e) par ce produit : ${product.title}. Voici le lien : ${productUrl}. Je souhaiterais avoir plus d’informations concernant son prix. Merci.`
   const initials = product.title
     .split(' ')
     .slice(0, 2)
@@ -39,15 +44,17 @@ export default function ProductCard({ product }:{ product:any }){
             <span className="rounded-full border border-[#d9b888]/30 bg-[rgba(183,124,69,0.08)] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.18em] text-[#f1d9b2]">
               {category}
             </span>
-            <span className="text-[11px] uppercase tracking-[0.14em] text-[#c7b197]">{product.inStock === false ? 'Indisponible' : 'En stock'}</span>
+            <span className="text-[11px] uppercase tracking-[0.14em] text-[#c7b197]">{stockLabel(product.stockStatus, product.inStock)}</span>
           </div>
 
           <h3 className="text-[1.6rem] leading-[1.15] text-[#f8efdf]">{product.title}</h3>
 
           <div className="mt-5 flex items-end justify-between border-t border-[#d6b07a]/14 pt-4">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-[#d3ad77]">Prix</div>
-              <div className="mt-2 text-[1.55rem] font-semibold leading-none text-[#f1d9b2]">{product.price} MAD</div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[#d3ad77]">{negotiate ? 'Tarif' : 'Prix'}</div>
+              {negotiate ? (
+                <a href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(whatsappMessage)}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex rounded-full border border-[#d3ad77] px-3 py-2 text-xs text-[#f1d9b2]">Négocier</a>
+              ) : <div className="mt-2 text-[1.55rem] font-semibold leading-none text-[#f1d9b2]">{product.price} MAD</div>}
             </div>
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d6b07a]/25 bg-[rgba(183,124,69,0.1)] text-xl text-[#f8efdf] transition group-hover:border-[#d3ad77]/45 group-hover:bg-[rgba(183,124,69,0.22)]">→</span>
           </div>

@@ -1,10 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '../../../lib/prisma'
+import { getSupabaseServerClient } from '../../../lib/supabaseServer'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse){
   const { id } = req.query
   if(req.method === 'GET'){
-    const product = await prisma.product.findUnique({ where: { id: String(id) } })
+    const supabase = getSupabaseServerClient()
+    const { data: product } = supabase
+      ? await supabase.from('Product').select('*').eq('id', String(id)).maybeSingle()
+      : { data: null }
     if(!product) return res.status(404).json({ error: 'Produit non trouvé' })
     return res.status(200).json(product)
   }

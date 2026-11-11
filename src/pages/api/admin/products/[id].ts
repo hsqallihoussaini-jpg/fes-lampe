@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../../lib/adminAuth'
 import { getSupabaseServerClient } from '../../../../lib/supabaseServer'
+import { productCategories, pricingModes, stockStatuses } from '../../../../lib/catalog'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse){
   const token = getAdminTokenFromReq(req)
@@ -10,11 +11,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id } = req.query
 
   if(req.method === 'PUT'){
-    const { title, description, price, image, images, category, inStock, dimensions } = req.body
+    const { title, description, price, image, images, category, inStock, dimensions, stockStatus, pricingMode } = req.body
+    const normalizedStatus = stockStatuses.some((item) => item.value === stockStatus) ? stockStatus : 'IN_STOCK'
+    const normalizedPricing = pricingModes.some((item) => item.value === pricingMode) ? pricingMode : 'FIXED'
+    if (!productCategories.some((item) => item.value === category)) {
+      return res.status(400).json({ error: 'Catégorie invalide' })
+    }
     const { data, error } = await supabase.from('Product').update({
       title, description, price: Number(price), image,
       images: images ? JSON.stringify(images) : null,
-      category, inStock: Boolean(inStock), dimensions,
+      category, inStock: normalizedStatus !== 'OUT_OF_STOCK', dimensions,
+      stockStatus: normalizedStatus, pricingMode: normalizedPricing,
     }).eq('id', String(id)).select().single()
     if (error) return res.status(500).json({ error: 'Mise à jour échouée' })
     return res.status(200).json(data)

@@ -25,11 +25,11 @@ export default function ProductCard({ product }:{ product:any }){
       <Link href={`/product/${product.id}`} className="block">
         {main ? (
           <div className="relative overflow-hidden">
-            <img src={main} alt={product.title} className="h-[20rem] w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+            <img src={main} alt={product.title} className="h-[12rem] w-full object-cover transition duration-500 group-hover:scale-[1.04] md:h-[14rem]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0d0c0b]/60 via-transparent to-transparent" />
           </div>
         ) : (
-          <div className="flex h-[20rem] w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(214,176,122,0.28),transparent_18%),linear-gradient(135deg,#1e1a17,#8a5a2d_45%,#171412)] text-4xl font-semibold text-[#f8efdf]">
+          <div className="flex h-[12rem] w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(214,176,122,0.28),transparent_18%),linear-gradient(135deg,#1e1a17,#8a5a2d_45%,#171412)] text-4xl font-semibold text-[#f8efdf] md:h-[14rem]">
             {initials || 'FL'}
           </div>
         )}

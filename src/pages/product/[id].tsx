@@ -13,6 +13,8 @@ export default function ProductPage(){
   const [activeIndex, setActiveIndex] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
   const [isPlaying, setIsPlaying] = useState(true)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   useEffect(()=>{
     if(!id) return
@@ -42,12 +44,10 @@ export default function ProductPage(){
 
   const images: string[] = product.images ? JSON.parse(product.images) : (product.image ? [product.image] : [])
   const main = images.length ? images[activeIndex] : '/placeholder.jpg'
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [lightboxIndex, setLightboxIndex] = useState(0)
-
   return (
-    <div className="container mx-auto px-6 py-12">
-      <div className="grid md:grid-cols-2 gap-8">
+    <>
+      <div className="container mx-auto px-6 py-12">
+        <div className="grid md:grid-cols-2 gap-8">
         <div>
           <div className="relative" onMouseEnter={()=>setIsHovered(true)} onMouseLeave={()=>setIsHovered(false)}>
             <img onClick={()=>{ setLightboxIndex(activeIndex); setLightboxOpen(true) }} src={main} alt={product.title} className="w-full rounded-md object-cover max-h-[560px] cursor-zoom-in" />
@@ -76,14 +76,8 @@ export default function ProductPage(){
             <button onClick={() => router.push('/checkout')} className="btn-outline">Acheter</button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
-  )
-  
-  // render lightbox at end
-  return (
-    <>
-      {/* page already returned above in normal flow; keep compatibility */}
       {lightboxOpen && <Lightbox images={images} start={lightboxIndex} onClose={()=>setLightboxOpen(false)} />}
     </>
   )

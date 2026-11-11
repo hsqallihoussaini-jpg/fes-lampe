@@ -30,6 +30,7 @@ model SiteSetting {
 
 model SignedCollectionImage {
   id        String   @id @default(cuid())
+  collectionKey String?
   url       String
   position  Int      @default(0)
   visible   Boolean  @default(true)

@@ -23,10 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const { url, position, visible } = req.body || {}
+    const { url, position, visible, collectionKey } = req.body || {}
     if (!url) return res.status(400).json({ error: 'URL image requise' })
     const { data, error } = await supabase.from('SignedCollectionImage').insert({
       id: randomUUID(),
+      collectionKey: collectionKey ? String(collectionKey) : null,
       url: String(url),
       position: Number.isFinite(Number(position)) ? Number(position) : 0,
       visible: visible !== false,
@@ -39,11 +40,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PUT') {
-    const { id, url, position, visible } = req.body || {}
+    const { id, url, position, visible, collectionKey } = req.body || {}
     const { data, error } = await supabase.from('SignedCollectionImage').update({
       ...(url ? { url: String(url) } : {}),
       ...(position !== undefined ? { position: Number(position) } : {}),
       ...(visible !== undefined ? { visible: Boolean(visible) } : {}),
+      ...(collectionKey !== undefined ? { collectionKey: collectionKey ? String(collectionKey) : null } : {}),
     }).eq('id', String(id)).select().single()
     if (error) {
       if (isMissingTable(error)) return res.status(503).json({ error: 'La migration Supabase doit être exécutée avant de modifier les images.' })

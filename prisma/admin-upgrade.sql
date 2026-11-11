@@ -10,8 +10,12 @@ CREATE TABLE IF NOT EXISTS "SiteSetting" (
 
 CREATE TABLE IF NOT EXISTS "SignedCollectionImage" (
   "id" TEXT PRIMARY KEY,
+  "collectionKey" TEXT,
   "url" TEXT NOT NULL,
   "position" INTEGER NOT NULL DEFAULT 0,
   "visible" BOOLEAN NOT NULL DEFAULT TRUE,
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE "SignedCollectionImage"
+  ADD COLUMN IF NOT EXISTS "collectionKey" TEXT;

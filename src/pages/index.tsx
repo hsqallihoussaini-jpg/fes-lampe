@@ -8,12 +8,14 @@ const features = [
 ]
 
 const collections = [
-  { name: 'Lumière contemporaine', accent: 'Design minimaliste' },
-  { name: 'Sculptures du foyer', accent: 'Pièces d’exception' },
-  { name: 'Décor signature', accent: 'Ambiance haut de gamme' },
+  { key: 'lumiere-contemporaine', name: 'Lumière contemporaine', accent: 'Design minimaliste' },
+  { key: 'sculptures-du-foyer', name: 'Sculptures du foyer', accent: 'Pièces d’exception' },
+  { key: 'decor-signature', name: 'Décor signature', accent: 'Ambiance haut de gamme' },
 ]
 
-export default function Home({ collectionImages = [] }:{ collectionImages?: string[] }){
+type CollectionImage = { url: string; collectionKey?: string | null; position: number }
+
+export default function Home({ collectionImages = [] }:{ collectionImages?: CollectionImage[] }){
   return (
     <div className="bg-[#0d0c0b]">
       <section className="hero-shell relative overflow-hidden">
@@ -53,12 +55,16 @@ export default function Home({ collectionImages = [] }:{ collectionImages?: stri
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
-          {collections.map((collection, index) => (
-            <div key={collection.name} className="collection-card flex min-h-[400px] flex-col justify-end bg-cover bg-center p-7" style={{ backgroundImage: collectionImages[index] ? `linear-gradient(180deg, rgba(17,17,17,0.08), rgba(17,17,17,0.76)), url(${collectionImages[index]})` : `linear-gradient(180deg, rgba(17,17,17,0.08), rgba(17,17,17,0.76)), linear-gradient(135deg, rgba(179,107,58,${0.34 + index * 0.12}), rgba(17,17,17,0.92))` }}>
+          {collections.map((collection, index) => {
+            const image = collectionImages.find((item) => item.collectionKey === collection.key)
+              || collectionImages.filter((item) => !item.collectionKey)[index]
+            return (
+            <div key={collection.name} className="collection-card flex min-h-[400px] flex-col justify-end bg-cover bg-center p-7" style={{ backgroundImage: image?.url ? `linear-gradient(180deg, rgba(17,17,17,0.08), rgba(17,17,17,0.76)), url(${image.url})` : `linear-gradient(180deg, rgba(17,17,17,0.08), rgba(17,17,17,0.76)), linear-gradient(135deg, rgba(179,107,58,${0.34 + index * 0.12}), rgba(17,17,17,0.92))` }}>
               <p className="text-xs uppercase tracking-[0.22em] text-[#f1d8ae]">{collection.accent}</p>
               <h3 className="mt-3 text-3xl text-[#f9f1e9] md:text-4xl">{collection.name}</h3>
             </div>
-          ))}
+            )
+          })}
         </div>
       </section>
 
@@ -105,8 +111,16 @@ export async function getServerSideProps() {
   if (!supabase) return { props: { collectionImages: [] } }
   const { data } = await supabase
     .from('SignedCollectionImage')
-    .select('url')
+    .select('url,collectionKey,position')
     .eq('visible', true)
     .order('position', { ascending: true })
-  return { props: { collectionImages: (data || []).map((item) => item.url) } }
+  return {
+    props: {
+      collectionImages: (data || []).map((item) => ({
+        url: item.url,
+        collectionKey: item.collectionKey,
+        position: item.position,
+      })),
+    },
+  }
 }

@@ -158,6 +158,23 @@ h1, h2, h3, h4 {
   border-color: rgba(179, 107, 58, 0.45);
 }
 
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 img {
   display: block;
   max-width: 100%;

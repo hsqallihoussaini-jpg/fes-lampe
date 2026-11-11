@@ -176,7 +176,7 @@ export default function Shop({ products }:{ products:any[] }){
               </div>
 
               {category.items.length > 0 ? (
-                <div className="grid gap-6 p-5 md:gap-8 md:p-7 lg:grid-cols-3">
+                <div className="product-grid gap-6 p-5 md:gap-8 md:p-7">
                   {category.items.slice(0, 3).map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

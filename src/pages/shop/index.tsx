@@ -61,13 +61,22 @@ function getMainImage(product:any) {
 }
 
 export default function Shop({ products }:{ products:any[] }){
-  const byCategory = categories.map((category) => ({
-    ...category,
-    items: products.filter((product) => {
+  const categorizedProducts = new Set<any>()
+  const byCategory = categories.map((category, index) => {
+    const items = products.filter((product) => {
       const title = (product.category || '').toLowerCase()
-      return title.includes(category.key)
+      const matches = title.includes(category.key)
+
+      if (matches) categorizedProducts.add(product)
+      return matches
     })
-  }))
+
+    if (index === categories.length - 1) {
+      items.push(...products.filter((product) => !categorizedProducts.has(product)))
+    }
+
+    return { ...category, items }
+  })
 
   return (
     <div className="vendor-page">

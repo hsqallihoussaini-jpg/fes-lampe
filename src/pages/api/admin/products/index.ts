@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { randomUUID } from 'crypto'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../../lib/adminAuth'
 import { getSupabaseServerClient } from '../../../../lib/supabaseServer'
 
@@ -17,6 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if(req.method === 'POST'){
     const { title, description, price, image, images, category, inStock, dimensions } = req.body
     const product = {
+      id: randomUUID(),
       title: String(title || '').trim(),
       description: description ? String(description) : null,
       price: Number(price),
@@ -25,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       category: category ? String(category) : null,
       inStock: inStock === undefined ? true : Boolean(inStock),
       dimensions: dimensions ? String(dimensions) : null,
+      createdAt: new Date().toISOString(),
     }
 
     if (!product.title || !Number.isFinite(product.price) || product.price <= 0) {

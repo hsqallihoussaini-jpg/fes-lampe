@@ -3,6 +3,10 @@ import { randomUUID } from 'crypto'
 import { getAdminTokenFromReq, verifyAdminToken } from '../../../lib/adminAuth'
 import { getSupabaseServerClient } from '../../../lib/supabaseServer'
 
+function isMissingTable(error: { code?: string; message?: string }) {
+  return error.code === 'PGRST205' || error.message?.includes("Could not find the table")
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const token = getAdminTokenFromReq(req)
   if (!token || !verifyAdminToken(token)) return res.status(401).json({ error: 'Unauthorized' })
@@ -11,7 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     const { data, error } = await supabase.from('SignedCollectionImage').select('*').order('position', { ascending: true })
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) {
+      if (isMissingTable(error)) return res.status(200).json([])
+      return res.status(500).json({ error: error.message })
+    }
     return res.status(200).json(data || [])
   }
 
@@ -24,7 +31,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       position: Number.isFinite(Number(position)) ? Number(position) : 0,
       visible: visible !== false,
     }).select().single()
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) {
+      if (isMissingTable(error)) return res.status(503).json({ error: 'La migration Supabase doit être exécutée avant d’ajouter des images.' })
+      return res.status(500).json({ error: error.message })
+    }
     return res.status(201).json(data)
   }
 
@@ -35,13 +45,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ...(position !== undefined ? { position: Number(position) } : {}),
       ...(visible !== undefined ? { visible: Boolean(visible) } : {}),
     }).eq('id', String(id)).select().single()
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) {
+      if (isMissingTable(error)) return res.status(503).json({ error: 'La migration Supabase doit être exécutée avant de modifier les images.' })
+      return res.status(500).json({ error: error.message })
+    }
     return res.status(200).json(data)
   }
 
   if (req.method === 'DELETE') {
     const { error } = await supabase.from('SignedCollectionImage').delete().eq('id', String(req.query.id))
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) {
+      if (isMissingTable(error)) return res.status(503).json({ error: 'La migration Supabase doit être exécutée avant de supprimer des images.' })
+      return res.status(500).json({ error: error.message })
+    }
     return res.status(204).end()
   }
 

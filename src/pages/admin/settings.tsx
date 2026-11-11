@@ -6,7 +6,10 @@ export default function AdminSettings() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    fetch('/api/admin/settings').then((response) => response.json()).then((data) => setWhatsappNumber(data.whatsappNumber || ''))
+    fetch('/api/admin/settings').then((response) => response.json()).then((data) => {
+      setWhatsappNumber(data.whatsappNumber || '')
+      if (data.setupRequired) setMessage('Exécutez la migration Supabase avant d’enregistrer ce numéro.')
+    })
   }, [])
 
   async function save() {

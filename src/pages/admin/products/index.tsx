@@ -10,6 +10,13 @@ export default function AdminProducts() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imagesItems, setImagesItems] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const productCategories = [
+    { value: 'lampes & luminaires', label: 'Lampes & luminaires' },
+    { value: 'décoration', label: 'Décoration' },
+    { value: 'bijoux & accessoires', label: 'Bijoux & accessoires' },
+    { value: 'créations personnalisées', label: 'Créations personnalisées' },
+    { value: 'pièces uniques', label: 'Pièces uniques' },
+  ]
 
   async function create() {
     if (!title.trim()) {
@@ -19,6 +26,11 @@ export default function AdminProducts() {
 
     if (!price || Number(price) <= 0) {
       alert('Veuillez saisir un prix valide.')
+      return
+    }
+
+    if (!category) {
+      alert('Veuillez sélectionner une catégorie.')
       return
     }
 
@@ -193,13 +205,18 @@ export default function AdminProducts() {
                 Catégorie
               </label>
 
-              <input
-                type="text"
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="Ex. Lampes / Suspensions"
                 className="w-full rounded-lg border border-[#5d4937] bg-[#17130f] px-4 py-3 text-[#f8efdf] outline-none transition focus:border-[#d3ad77]"
-              />
+              >
+                <option value="">Sélectionner une catégorie</option>
+                {productCategories.map((productCategory) => (
+                  <option key={productCategory.value} value={productCategory.value}>
+                    {productCategory.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

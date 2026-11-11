@@ -17,6 +17,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if(req.method === 'POST'){
     const { title, description, price, image, images, category, inStock, dimensions } = req.body
+    const allowedCategories = [
+      'lampes & luminaires',
+      'décoration',
+      'bijoux & accessoires',
+      'créations personnalisées',
+      'pièces uniques',
+    ]
     const product = {
       id: randomUUID(),
       title: String(title || '').trim(),
@@ -24,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       price: Number(price),
       image: image ? String(image) : null,
       images: Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null,
-      category: category ? String(category) : null,
+      category: category ? String(category).trim().toLowerCase() : null,
       inStock: inStock === undefined ? true : Boolean(inStock),
       dimensions: dimensions ? String(dimensions) : null,
       createdAt: new Date().toISOString(),
@@ -32,6 +39,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!product.title || !Number.isFinite(product.price) || product.price <= 0) {
       return res.status(400).json({ error: 'Nom et prix valides requis' })
+    }
+
+    if (!product.category || !allowedCategories.includes(product.category)) {
+      return res.status(400).json({ error: 'Catégorie invalide' })
     }
 
     const { data, error } = await supabase.from('Product').insert(product).select().single()

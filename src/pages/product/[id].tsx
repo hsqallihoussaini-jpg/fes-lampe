@@ -50,10 +50,10 @@ export default function ProductPage(){
       <div className="container mx-auto px-6 py-12">
         <div className="grid md:grid-cols-2 gap-8">
         <div>
-          <div className="relative" onMouseEnter={()=>setIsHovered(true)} onMouseLeave={()=>setIsHovered(false)}>
-            <img onClick={()=>{ setLightboxIndex(activeIndex); setLightboxOpen(true) }} src={main} alt={product.title} className="w-full rounded-md object-cover max-h-[560px] cursor-zoom-in" />
-            <button onClick={()=>setActiveIndex((activeIndex-1+images.length)%images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded">◀</button>
-            <button onClick={()=>setActiveIndex((activeIndex+1)%images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded">▶</button>
+          <div className="relative flex h-[52vh] min-h-[280px] max-h-[560px] items-center justify-center overflow-hidden rounded-md bg-black/10 md:h-[65vh]" onMouseEnter={()=>setIsHovered(true)} onMouseLeave={()=>setIsHovered(false)}>
+            <img onClick={()=>{ setLightboxIndex(activeIndex); setLightboxOpen(true) }} src={main} alt={product.title} className="max-h-full max-w-full rounded-md object-contain cursor-zoom-in" />
+            {images.length > 1 && <button aria-label="Image précédente" onClick={()=>setActiveIndex((activeIndex-1+images.length)%images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded">◀</button>}
+            {images.length > 1 && <button aria-label="Image suivante" onClick={()=>setActiveIndex((activeIndex+1)%images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded">▶</button>}
             <button onClick={()=>setIsPlaying(p=>!p)} aria-label="Play/Pause" className="absolute right-3 top-3 bg-white/80 p-2 rounded">
               {isPlaying ? '⏸' : '▶'}
             </button>
@@ -61,7 +61,7 @@ export default function ProductPage(){
           <div className="mt-3 flex gap-2">
             {images.map((u, idx)=> (
               <button key={idx} onClick={()=>{ setActiveIndex(idx); setLightboxIndex(idx); }} className={`border p-1 rounded ${idx===activeIndex? 'ring-2 ring-bronze':''}`}>
-                <img onClick={(e)=>{ e.stopPropagation(); setLightboxIndex(idx); setLightboxOpen(true) }} src={u} className="h-20 w-20 object-cover cursor-zoom-in" />
+                <img onClick={(e)=>{ e.stopPropagation(); setLightboxIndex(idx); setLightboxOpen(true) }} src={u} alt={`${product.title} ${idx + 1}`} className="h-20 w-20 object-contain cursor-zoom-in" />
               </button>
             ))}
           </div>
